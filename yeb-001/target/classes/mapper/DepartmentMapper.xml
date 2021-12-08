@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xu.server.mapper.DepartmentMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.xu.server.pojo.Department">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="parentId" property="parentId" />
+        <result column="depPath" property="depPath" />
+        <result column="enabled" property="enabled" />
+        <result column="isParent" property="isParent" />
+    </resultMap>
+
+    <!--查询包含子部门,采用递归的方式-->
+    <resultMap id="getAllDepart" type="com.xu.server.pojo.Department" extends="BaseResultMap">
+        <collection property="children" ofType="com.xu.server.pojo.Department" select="com.xu.server.mapper.DepartmentMapper.getAllDepart" column="id"/>
+    </resultMap>
+
+    <select id="getAllDepart" resultMap="getAllDepart">
+        select
+        <include refid="Base_Column_List"/>
+        from t_department
+        where parentId=#{parentId}
+    </select>
+
+    <!--添加管理部门，调用存储过程-->
+    <insert id="addDept" statementType="CALLABLE">
+        call addDep(#{name,mode=IN,jdbcType=VARCHAR},#{parentId,mode=IN,jdbcType=INTEGER},#{enabled,mode=IN,jdbcType=BOOLEAN},#{result,mode=OUT,jdbcType=INTEGER},#{id,mode=OUT,jdbcType=INTEGER})
+    </insert>
+    
+    <!--删除管理部门，调用存储过程-->
+    <delete id="delDept" statementType="CALLABLE">
+        call deleteDep(#{id,mode=IN,jdbcType=INTEGER},#{result,mode=OUT,jdbcType=INTEGER})
+    </delete>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, parentId, depPath, enabled, isParent
+    </sql>
+
+</mapper>
